@@ -1,0 +1,47 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+#schedules {
+    max-width: 1140px;
+    margin: 50px auto;
+}
+
+.container {
+    margin: 30px 0 0;
+}
+
+.table {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+}
+
+.cell {
+    border: 1px solid #000;
+    padding: 10px 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.cell_title {
+    font-weight: bold;
+    background-color: lightskyblue;
+}
+
+button {
+    cursor: pointer;
+}
+
+.cancel:hover {
+    background-color: lightpink;
+}
+.check-in:disabled {
+    pointer-events: none;
+}
+.check-in:hover {
+    background-color: lightgreen;
+}
