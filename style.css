@@ -4,44 +4,88 @@
     box-sizing: border-box;
 }
 
-#schedules {
-    max-width: 1140px;
-    margin: 50px auto;
+#slider {
+    max-width: 1024px;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: contain;
+    margin: 100px auto;
+    position: relative;
+    background-color: #ccc;
+    overflow: hidden;
 }
 
-.container {
-    margin: 30px 0 0;
+#slider:hover .pagination {
+    opacity: 1;
+    transition: opacity .3s ease;
+
 }
 
-.table {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
+#slider:hover .back {
+    opacity: 1;
+    transition: opacity .3s ease;
 }
 
-.cell {
-    border: 1px solid #000;
-    padding: 10px 15px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
+#slider:hover .next {
+    opacity: 1;
+    transition: opacity .3s ease;
 }
 
-.cell_title {
-    font-weight: bold;
-    background-color: lightskyblue;
+
+.main-img {
+    display: block;
+    width: 100%;
+
 }
 
-button {
+.back, .next {
+    opacity: 0;
+    transition: opacity .3s ease;
+    z-index: 10;
+    position: absolute;
+    padding: 0.5rem 1rem;
+    background-color: rgba(0, 0, 0, 0.8);
+    color: rgba(255, 255, 255, 0.8);
+    outline: none;
+    border: none;
     cursor: pointer;
+    border-radius: 0.8rem;
+    font-size: 30px;
 }
 
-.cancel:hover {
-    background-color: lightpink;
+.back {
+    left: 10px;
+    top: 50%;
 }
-.check-in:disabled {
-    pointer-events: none;
+
+.next {
+    right: 10px;
+    top: 50%;
 }
-.check-in:hover {
-    background-color: lightgreen;
+
+.pagination {
+    opacity: 0;
+    transition: opacity .3s ease;
+    z-index: 10;
+    position: absolute;
+    bottom: 5%;
+    left:50%;
+    transform:translateX(-50%);
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.pagination__item {
+    padding: 0.5rem;
+    outline: none;
+    border: none;
+    cursor: pointer;
+    border-radius: 50%;
+    background-color: rgba(0, 0, 0, 0.8);
+    box-sizing: border-box;
+}
+
+.pagination__item_active {
+    background-color: white;
 }

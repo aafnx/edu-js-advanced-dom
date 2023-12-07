@@ -1,158 +1,135 @@
-'use strict';
+'use strict'
 
-class SchedulesView {
-    #keyStorage = 'schedules';
-    #data = [];
-    constructor(options) {
-        this.root = document.querySelector(options.id);
-        if (!this.root) {
-            throw new Error(`Не найден HTML элемент с id ${options.id}`);
-        }
-        this.init(options);
+const pathToImgs = './img';
+const imgsSrc = [];
+const imgLength = 6;
 
-    }
-    get key() {
-        return this.#keyStorage;
-    }
-    get data() {
-        return this.#data;
-    }
+for (let i = 1; i <= imgLength; i++) {
+    imgsSrc.push(`${pathToImgs}/img${i}.jpg`);
+}
 
-    set data(data) {
-        this.#data = data;
-    }
-    init(options) {
-        const dataFromLocalStorage = this.getFromLocalStorage();
-        if (dataFromLocalStorage) {
-            this.data = dataFromLocalStorage;
-            this.render()
-            this.addEventListeners();
+const rootEl = document.querySelector('#slider');
+const imgEl = rootEl.querySelector('.main-img');
+const paginationEl = rootEl.querySelector('.pagination');
+const paginationItemEls = [];
+
+
+function changePagination(paginationItemEls, id) {
+    paginationItemEls.forEach(item => {
+        if (item.dataset.id == id) {
+            item.classList.add('pagination__item_active');
         } else {
-            this.requestToBD(options.urlToBD);
+            item.classList.remove('pagination__item_active');
         }
-    }
-    requestToBD(url) {
-        fetch(url)
-            .then(response => {
-                if (response.ok) {
-                    return response.json();
-                }
-                throw new Error('Ошибка загрузки данных');
-            })
-            .then(data => {
-                this.data = data;
-                this.refreshDataModel();
-                this.render(data);
-                this.addEventListeners();
-            })
-            .catch((error) => error);
-    }
-    addEventListeners() {
-        this.container.addEventListener('click', event => {
-            if (event.target.classList.contains('cancel')) {
-                const cancelBtnEl = event.target;
-                this.changeLessonCheckin(cancelBtnEl.dataset.id, false);
-            }
-            if (event.target.classList.contains('check-in')) {
-                const checkInBtn = event.target;
-                this.changeLessonCheckin(checkInBtn.dataset.id, true);
-            }
-        })
-    }
-    changeLessonCheckin(lessonId, isCheckin) {
-        if (isCheckin) {
-            this.increaseParticipant(lessonId);
-        } else {
-            this.reductionParticipant(lessonId);
-        }
-        this.refreshDataModel();
-        this.saveToLocalStorage();
-        this.renderTable();
-    }
-    findLesson(id) {
-        return this.data.find(lesson => lesson.id === Number(id));
-    }
-    refreshDataModel() {
-        this.calcRestParticipants();
-    }
-    renderTable(data = this.data) {
+    });
+}
 
-        const markupTableRows = data.reduce((row, lesson) => (
-            row += `
-                    <p data-id="${lesson.id}" class="cell">${lesson.name}</p>
-                    <p data-id="${lesson.id}" class="cell">${lesson.time}</p>
-                    <p data-id="${lesson.id}" class="cell">${lesson.currentParticipants}</p>
-                    <p data-id="${lesson.id}" class="cell">${lesson.maxParticipants}</p>
-                    <p data-id="${lesson.id}" class="cell">${lesson.restParticipants}</p>
-                    <button data-id="${lesson.id}" class="cell cancel">Отменить запись</button>
-                    <button data-id="${lesson.id}" class="cell check-in" ${lesson.restParticipants ? '' : 'disabled'}>Записаться</button>
-            `
-        ), "");
-        this.container.innerHTML = `
-            <div class="table">
-                    <p class="cell cell_title">Название занятия</p>
-                    <p class="cell cell_title">Время занятия</p>
-                    <p class="cell cell_title">Записано участников</p>
-                    <p class="cell cell_title">Всего мест</p>
-                    <p class="cell cell_title">Доступно мест для записи</p>
-                    <p class="cell cell_title"></p>
-                    <p class="cell cell_title"></p>
-                    ${markupTableRows}
-            </div>
-        `;
-    }
-    render(data = this.data) {
-        const titleEl = document.createElement('h1');
-        titleEl.innerText = 'Расписание занятий';
-        titleEl.classList.add('title');
-        this.root.insertAdjacentElement('afterbegin', titleEl);
+function animationSlide(htmlEl, options) {
+    const distance = '500px';
+    const direction = options.direction ? `translateX(${distance})` : `translateX(-${distance})`;
+    htmlEl.animate([
+        {
+            transform: direction,
+            opacity: 0
+        },
+        {
+            transform: 'translateX(0)',
+            opacity: 1
+        }
+    ], {
+        duration: options.duration ?? 500,
+        fill: 'both',
+        easing: 'cubic-bezier(0.250, 0.460, 0.450, 0.940)'
+    })
+}
 
-        const container = document.createElement('div');
-        container.classList.add('container');
-        this.container = container;
-        this.root.insertAdjacentElement('beforeend', container);
+function showNext() {
+    const currentSlide = imgEl.src;
+    imgEl.src = slideData.next();
+    rootEl.style.backgroundImage = `url(${currentSlide})`
+    animationSlide(imgEl, {direction: true})
+    changePagination(paginationItemEls, slideData.getSlide());
+}
 
-        this.renderTable(data);
-    }
-    increaseParticipant(lessonId) {
-        const lesson = this.findLesson(lessonId);
-        if (!lesson) {
-            throw new Error(`Занятие с id ${lessonId} не найдено!`);
-        }
-        lesson.currentParticipants += 1;
-        if (lesson.currentParticipants > lesson.maxParticipants) {
-            lesson.currentParticipants = lesson.maxParticipants;
-        }
-    }
-    reductionParticipant(lessonId) {
-        const lesson = this.findLesson(lessonId);
-        if (!lesson) {
-            throw new Error(`Занятие с id ${lessonId} не найдено!`);
-        }
-        lesson.currentParticipants -= 1;
-        if (lesson.currentParticipants < 0) {
-            lesson.currentParticipants = 0;
-        }
-    }
-    calcRestParticipants() {
-        this.data.map(lesson => {
-            const restParticipants = lesson.maxParticipants - lesson.currentParticipants;
-            if (restParticipants  < 0 ) {
-                lesson.restParticipants = 0;
-            } else {
-                lesson.restParticipants = restParticipants;
+function showPrevious() {
+    const currentSlide = imgEl.src;
+    imgEl.src = slideData.back();
+    rootEl.style.backgroundImage = `url(${currentSlide})`
+    animationSlide(imgEl, {direction: false})
+    changePagination(paginationItemEls, slideData.getSlide());
+}
+
+function initSlideData(srcArr) {
+    let slide = 0;
+    const imgsSrc = srcArr;
+    return {
+        getImgsSrc() {
+            return imgsSrc;
+        },
+        getSlide() {
+            return slide;
+        },
+        next(isSaveState = true) {
+            const currentSLide = slide >= imgsSrc.length - 1 ? 0 : slide + 1;
+            if (isSaveState) {
+                slide = currentSLide;
             }
-        })
-    }
-    getFromLocalStorage(key = this.key) {
-        return JSON.parse(localStorage.getItem(key));
-    }
-    saveToLocalStorage(data = this.data, key = this.#keyStorage) {
-        localStorage.setItem(key, JSON.stringify(data));
+            return imgsSrc[currentSLide]
+        },
+        back(isSaveState = true) {
+            const currentSLide = slide <= 0 ? imgsSrc.length - 1 : slide - 1;
+            if (isSaveState) {
+                slide = currentSLide;
+            }
+            return imgsSrc[currentSLide];
+        },
+        getSrc(id = slide) {
+            slide = Number(id);
+            return imgsSrc[slide]
+        },
     }
 }
 
-new SchedulesView({
-    id: '#schedules',
-    urlToBD: 'data.json'
+function initPaginationItems(imgsArray, containerHTMLEl, paginationItemsArray) {
+    imgsArray.forEach((_, index) => {
+        const paginationItemEl = document.createElement('button');
+        paginationItemEl.classList.add('pagination__item');
+        paginationItemEl.setAttribute('data-id', index);
+        containerHTMLEl.append(paginationItemEl);
+        paginationItemsArray.push(paginationItemEl);
+    })
+}
+
+
+const slideData = initSlideData(imgsSrc);
+initPaginationItems(slideData.getImgsSrc(), paginationEl, paginationItemEls)
+
+imgEl.src = slideData.getSrc();
+rootEl.style.backgroundImage = `url(${slideData.getSrc()})`
+changePagination(paginationItemEls, slideData.getSlide());
+
+rootEl.addEventListener('click', event => {
+    const target = event.target;
+    if (target.closest('.next')) {
+        showNext();
+    }
+    if (target.closest('.back')) {
+        showPrevious();
+    }
+});
+
+paginationEl.addEventListener('click', event => {
+    if (event.target.classList.contains('pagination__item')) {
+        rootEl.style.backgroundImage = `url(${slideData.getSrc()})`
+        changePagination(paginationItemEls, Number(event.target.dataset.id))
+        imgEl.src = slideData.getSrc(Number(event.target.dataset.id))
+        animationSlide(imgEl, {direction: true});
+    }
+});
+
+document.addEventListener('keyup', event => {
+    if (event.key === 'ArrowRight') showNext();
+    if (event.key === 'ArrowLeft') showPrevious();
 })
+
+
