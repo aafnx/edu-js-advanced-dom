@@ -1,4 +1,8 @@
 .DS_Store
+package.json
+yarn.lock
+api.json
+app-secret.json
 
 .idea/
-.node_modules/
+node_modules/
